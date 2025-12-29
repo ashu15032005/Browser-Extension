@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* New Styles for Whitelist Manager */
+    .settings-btn {
+      background: none; border: none; color: #9ca3af; cursor: pointer; padding: 8px;
+      transition: color 0.2s; display: flex; align-items: center;
+    }
+    .settings-btn:hover { color: #f9fafb; }
+
+    .whitelist-list {
+      list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto;
+    }
+    .whitelist-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px; background: #1f2937; border-radius: 8px; margin-bottom: 8px;
+      border: 1px solid #374151; font-size: 13px;
+    }
+    .whitelist-domain { color: #f9fafb; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+    .remove-btn {
+      background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: 0.2s;
+    }
+    .remove-btn:hover { background: #ef4444; color: white; }
+    .empty-msg { text-align: center; color: #6b7280; font-size: 13px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <div class="glow-bg"></div>
+
+  <header>
+    <div class="brand"><span>🛡️ Guardian</span></div>
+    
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <!-- GAMIFICATION BADGE -->
+      <div class="xp-badge">
+        <span id="userPoints">0</span> XP
+      </div>
+      <!-- SETTINGS BUTTON (NEW) -->
+      <button id="openWhitelistBtn" class="settings-btn" title="Manage Trusted Sites">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="scanner-container">
+      <div class="scanner-ring"></div>
+      <div class="scanner-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+    </div>
+
+    <div class="site-info">
+      <h2 id="hostname">Scanning...</h2>
+      <p class="site-status text-safe">Connection Secured</p>
+    </div>
+
+    <button id="showFormBtn" class="btn btn-primary">
+      Report Suspicious Activity
+    </button>
+  </main>
+
+  <!-- REPORT FORM DRAWER -->
+  <div id="report-form" class="drawer">
+    <div class="drawer-header">
+      <h3>Report Threat</h3>
+      <button id="cancelReportBtn" class="close-btn">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <textarea id="reasonInput" placeholder="Why is this site dangerous?"></textarea>
+      <button id="submitReportBtn" class="btn btn-danger">Submit Report</button>
+    </div>
+  </div>
+
+  <!-- WHITELIST MANAGER DRAWER (NEW) -->
+  <div id="whitelist-drawer" class="drawer">
+    <div class="drawer-header">
+      <h3>Trusted Sites</h3>
+      <button id="closeWhitelistBtn" class="close-btn">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <p class="helper-text" style="margin-bottom: 15px;">These sites bypass security checks.</p>
+      <ul id="whitelist-container" class="whitelist-list">
+        <!-- JS will populate list here -->
+      </ul>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">
+    <span id="toast-icon">✅</span>
+    <span id="toast-message">Success</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html> 

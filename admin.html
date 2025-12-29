@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Admin Portal</title>
+    
+    <!-- TAILWIND CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: { gray: { 850: '#1f2937', 900: '#111827', 950: '#030712' } },
+                    animation: { 'fade-in': 'fadeIn 0.5s ease-out' },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #030712; color: #f9fafb; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- ==========================
+         VIEW 1: LOGIN SCREEN
+         ========================== -->
+    <div id="login-view" class="flex-1 flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-8 animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-flex bg-blue-600/10 p-4 rounded-xl mb-4 border border-blue-600/20">
+                    <svg class="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white">Admin Access</h1>
+                <p class="text-gray-500 text-sm mt-2">Guardian Security Systems</p>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 uppercase mb-1">Email</label>
+                    <input type="email" id="email" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="admin@guardian.com" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 uppercase mb-1">Password</label>
+                    <input type="password" id="password" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="••••••••" required>
+                </div>
+                <div id="login-error" class="text-red-500 text-sm text-center hidden bg-red-900/20 p-2 rounded border border-red-900/50">Invalid credentials</div>
+                
+                <button type="submit" id="login-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-all transform active:scale-95 shadow-lg shadow-blue-900/20">
+                    Authenticate
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================
+         VIEW 2: DASHBOARD (Hidden initially)
+         ========================== -->
+    <div id="dashboard-view" class="hidden flex-1 flex flex-col">
+        <!-- NAVBAR -->
+        <nav class="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/80 backdrop-blur-xl">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                            Guardian<span class="font-normal text-gray-500">Admin</span>
+                        </span>
+                    </div>
+                    <button id="logout-btn" class="text-sm font-medium text-red-400 hover:text-white transition flex items-center gap-2 border border-red-900/30 bg-red-900/10 px-4 py-2 rounded-lg hover:bg-red-900/20">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- CONTENT -->
+        <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Pending Reports</h2>
+                    <p class="text-gray-500 text-sm">Review user flagged websites.</p>
+                </div>
+                <button onclick="location.reload()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm border border-gray-700 transition">Refresh List</button>
+            </div>
+
+            <div id="list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loader -->
+                <div class="col-span-full flex flex-col items-center justify-center py-24 opacity-70">
+                    <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p class="text-gray-500 font-medium">Loading Secure Data...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- FIREBASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, updateDoc, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // YOUR CONFIGURATION
+        const firebaseConfig = {
+          apiKey: "AIzaSyCBt90FwYp9Qsxa_ByzgbfDbEcPIXY43bA",
+          authDomain: "barcode-sync-af05a.firebaseapp.com",
+          projectId: "barcode-sync-af05a",
+          storageBucket: "barcode-sync-af05a.firebasestorage.app",
+          messagingSenderId: "639065411028",
+          appId: "1:639065411028:web:58d44150f8e0c792ccda41",
+          measurementId: "G-JWLTB00SZ9"
+        };
+
+        // INIT
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // UI ELEMENTS
+        const loginView = document.getElementById('login-view');
+        const dashboardView = document.getElementById('dashboard-view');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const loginBtn = document.getElementById('login-btn');
+
+        // --- AUTH STATE LISTENER ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginView.classList.add('hidden');
+                dashboardView.classList.remove('hidden');
+                loadReports(); 
+            } else {
+                dashboardView.classList.add('hidden');
+                loginView.classList.remove('hidden');
+                loginBtn.innerHTML = "Authenticate";
+                loginBtn.disabled = false;
+                document.getElementById('email').value = "";
+                document.getElementById('password').value = "";
+            }
+        });
+
+        // --- LOGIN ACTION ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            loginBtn.innerHTML = "Verifying...";
+            loginBtn.disabled = true;
+            loginError.classList.add('hidden');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error(error);
+                loginError.innerText = "Access Denied: Invalid Email or Password.";
+                loginError.classList.remove('hidden');
+                loginBtn.innerHTML = "Authenticate";
+                loginBtn.disabled = false;
+            }
+        });
+
+        // --- LOGOUT ACTION ---
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            if(confirm("Secure Logout: Are you sure?")) {
+                signOut(auth);
+            }
+        });
+
+        // --- DASHBOARD LOGIC ---
+        async function loadReports() {
+            const list = document.getElementById("list");
+            
+            try {
+                const snap = await getDocs(collection(db, "reports"));
+                let html = "";
+                let count = 0;
+
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (data.status === "pending") {
+                        count++;
+                        let domain = data.url;
+                        try { domain = new URL(data.url.startsWith('http') ? data.url : `https://${data.url}`).hostname; } catch(e){}
+                        let reporter = data.reporterId ? data.reporterId.substring(0, 100)   : "Unknown";
+
+                        html += `
+                        <div class="group bg-gray-900 rounded-xl border border-gray-800 p-6 hover:border-blue-500/50 transition duration-300 shadow-lg flex flex-col animate-fade-in">
+                            <!-- Card Header -->
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 rounded bg-gray-800 border border-gray-700">
+                                        <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    </div>
+                                    <h3 class="font-bold text-white break-all text-lg">${domain}</h3>
+                                </div>
+                                <span class="text-xs text-gray-500 font-mono bg-gray-950 px-2 py-1 rounded border border-gray-800">
+                                    ${new Date(data.timestamp).toLocaleDateString()}
+                                </span>
+                            </div>
+
+                            <!-- Reporter Info -->
+                            <div class="mb-2">
+                                <span class=" text-xs bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-900/50">ReporterId: ${reporter}</span>
+                            </div>
+
+                            <!-- Reason Box -->
+                            <div class="mb-6 flex-1">
+                                <p class="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider">Reason</p>
+                                <div class="bg-gray-950/50 p-3 rounded-lg border border-gray-800 text-sm text-gray-300 italic relative">
+                                    <div class="absolute left-0 top-3 bottom-3 w-0.5 bg-blue-500 rounded-r"></div>
+                                    "${data.reason || 'No details provided'}"
+                                </div>
+                                <p class="text-xs text-gray-600 mt-2 truncate font-mono">${data.url}</p>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="grid grid-cols-2 gap-3 mt-auto">
+                                <button id="rej-${d.id}" class="py-2.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:bg-gray-800 transition font-medium">
+                                    Dismiss
+                                </button>
+                                <button id="app-${d.id}" class="py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-blue-900/30 transition font-medium">
+                                    Ban & Give XP
+                                </button>
+                            </div>
+                        </div>`;
+                    }
+                });
+                
+                if (count === 0) {
+                    list.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/20">
+                        <div class="inline-flex bg-gray-800 p-4 rounded-full mb-4 shadow-xl"><svg class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div>
+                        <h3 class="text-xl font-bold text-white mb-1">All Caught Up!</h3>
+                        <p class="text-gray-500">There are no pending reports to review.</p>
+                    </div>`;
+                } else {
+                    list.innerHTML = html;
+                    snap.forEach(d => {
+                        if (d.data().status === "pending") {
+                            document.getElementById(`app-${d.id}`).onclick = () => handleAction(d.id, d.data().url, d.data().reporterId, 'ban');
+                            document.getElementById(`rej-${d.id}`).onclick = () => handleAction(d.id, null, null, 'dismiss');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+                list.innerHTML = `<div class="col-span-full text-center text-red-500">Error loading data.</div>`;
+            }
+        }
+
+        async function handleAction(reportId, url, reporterId, action) {
+            const btn = document.getElementById(action === 'ban' ? `app-${reportId}` : `rej-${reportId}`);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Processing...";
+            btn.disabled = true;
+
+            try {
+                if (action === 'ban') {
+                    if(confirm(`Security Alert:\n\nBan ${url}?\n\nThis will block the site for everyone and award +10 XP to the reporter.`)) {
+                        
+                        // 1. Approve Report (Ban Site)
+                        await updateDoc(doc(db, "reports", reportId), { status: "approved" });
+                        
+                        // 2. Award Points to User (if valid ID)
+                        if (reporterId && reporterId !== "anonymous") {
+                            const userRef = doc(db, "users", reporterId);
+                            // Read current points first safely
+                            let currentPoints = 0;
+                            try {
+                                const userSnap = await getDoc(userRef);
+                                if (userSnap.exists()) {
+                                    currentPoints = userSnap.data().points || 0;
+                                }
+                            } catch(err) { console.log("User doc might not exist yet, creating one."); }
+
+                            // Update Points
+                            await setDoc(userRef, { points: currentPoints + 10 }, { merge: true });
+                            console.log(`Awarded 10 points to ${reporterId}`);
+                        }
+
+                        alert("Site Banned & Points Awarded!");
+                        loadReports(); // Refresh UI
+                    } else {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                } else {
+                    if(confirm('Confirm Deletion:\n\nRemove this report?')) {
+                        await deleteDoc(doc(db, "reports", reportId));
+                        loadReports();
+                    } else {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                }
+            } catch(e) {
+                alert("Action failed. Check console for details.");
+                console.error(e);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
