@@ -1,88 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Security Alert</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      background-color: #030712;
-      color: #f9fafb;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      background: #111827;
-      padding: 40px;
-      margin: auto;
-      border-radius: 20px;
-      max-width: 600px;
-      border: 1px solid #1f2937;
-      box-shadow: 0 0 50px rgba(239, 68, 68, 0.15);
-    }
-    h1 { font-size: 2.5em; margin-bottom: 10px; color: #ef4444; }
-    p { font-size: 1.1em; color: #9ca3af; margin-bottom: 20px; }
-    
-    .reason-box {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      color: #ef4444;
-      padding: 15px;
-      border-radius: 10px;
-      font-family: monospace;
-      margin-bottom: 30px;
-    }
-
-    .btn {
-      padding: 15px 30px;
-      font-size: 1em;
-      border: none;
-      cursor: pointer;
-      border-radius: 10px;
-      font-weight: 700;
-      transition: 0.2s;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-
-    .btn-safety {
-      background: #3b82f6;
-      color: white;
-    }
-    .btn-safety:hover { background: #2563eb; }
-
-    .btn-trust {
-      background: transparent;
-      color: #6b7280;
-      font-size: 0.9em;
-      margin-top: 10px;
-    }
-    .btn-trust:hover { color: #9ca3af; text-decoration: underline; }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="warning.css">
 </head>
+
 <body>
   <div class="container">
-    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 20px auto;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-    
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round" style="margin: 0 auto 20px auto;">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+      <line x1="12" y1="9" x2="12" y2="13"></line>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+
     <h1>Access Blocked</h1>
     <p>Guardian prevented a potential threat.</p>
-    
+
     <div class="reason-box">
       Reason: <span id="reason">Loading...</span>
     </div>
 
-    <!-- MAIN BUTTON: Go to Google -->
+
     <button id="safetyBtn" class="btn btn-safety">Go Back to Safety</button>
-    
-    <!-- WHITELIST BUTTON: Allow Site -->
     <button id="trustBtn" class="btn btn-trust">I trust this site, let me in</button>
   </div>
 
   <script src="warning.js"></script>
 </body>
+
 </html>

@@ -1,19 +1,17 @@
-// warning.js
-
-// 1. Get Params from URL
+// Get Params from URL
 const params = new URLSearchParams(window.location.search);
 const reason = params.get("reason") || "Dangerous Website Detected";
-const blockedUrl = params.get("url"); // We passed this from background.js
+const blockedUrl = params.get("url"); // From background.js
 
 // Display Reason
 document.getElementById("reason").innerText = reason;
 
-// 2. SAFETY BUTTON (Go to Google)
+// SAFETY BUTTON (Go to Google)
 document.getElementById("safetyBtn").addEventListener("click", () => {
     window.location.replace("https://www.google.com");
 });
 
-// 3. TRUST BUTTON (Add to Whitelist)
+// TRUST BUTTON (Add to Whitelist)
 document.getElementById("trustBtn").addEventListener("click", async () => {
     if (!blockedUrl) {
         alert("Error: Could not determine original URL.");
@@ -29,11 +27,11 @@ document.getElementById("trustBtn").addEventListener("click", async () => {
         );
 
         if (confirmed) {
-            // Get current whitelist
+            // current whitelist
             const data = await chrome.storage.local.get("whitelist");
             const whitelist = data.whitelist || [];
 
-            // Add new host if not exists
+            // Push to Whitelist
             if (!whitelist.includes(hostname)) {
                 whitelist.push(hostname);
                 await chrome.storage.local.set({ whitelist: whitelist });

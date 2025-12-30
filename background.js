@@ -1,10 +1,6 @@
-// background.js
-
 // --- CONFIGURATION ---
 const PROJECT_ID = "barcode-sync-af05a"; 
 const API_KEY = "AIzaSyCBt90FwYp9Qsxa_ByzgbfDbEcPIXY43bA";
-
-// 🟢 FINAL API KEYS (Only Google & VirusTotal):
 const GOOGLE_API_KEY = "AIzaSyAoYeGxp8RCNbRandPrwjlI8LlYgyf3-ss";
 const VT_API_KEY = "3752bcc9bb311421d676fa2cb7a43ca08b6d64b1b0ac0b30cd629078ad01d0d3";
 
@@ -21,7 +17,6 @@ chrome.runtime.onInstalled.addListener(async () => {
   syncScamList();
   syncUserPoints();
   
-  // Sync checks every 1 minute
   chrome.alarms.create("syncDatabase", { periodInMinutes: 1/60 });
 
   chrome.contextMenus.create({
@@ -38,7 +33,83 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// --- SYNC POINTS ---
+// --- RIGHT CLICK LISTENER (Deep Scan) ---
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === "scanLink") {
+    
+    // Notification: Scanning
+    chrome.notifications.create({
+      type: "basic",
+      iconUrl: "scam.png", 
+      title: "Guardian Scanning...",
+      message: "Checking the link against multiple security databases."
+    });
+
+    const isSafe = await runDeepScan(info.linkUrl);
+
+    // Notification: Result
+    if (isSafe) {
+      chrome.notifications.create({
+        type: "basic",
+        iconUrl: "scam.png",
+        title: "✅ Link Appears Safe",
+        message: "No threats found in Global Security Databases."
+      });
+    } else {
+      chrome.notifications.create({
+        type: "basic",
+        iconUrl: "scam.png",
+        title: "⛔ DANGER DETECTED",
+        message: "This link is flagged as unsafe! Do not visit."
+      });
+    }
+  }
+});
+
+// MESSAGE LISTENER (For Hover Scan) 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "scanUrl") {
+    handleScanRequest(request.url, sendResponse);
+    return true; 
+  }
+});
+
+async function handleScanRequest(url, sendResponse) {
+  const isSafe = await runDeepScan(url);
+  sendResponse({ isSafe: isSafe });
+}
+
+// SCANNING LOGIC 
+async function runDeepScan(url) {
+  let urlObj;
+  try { 
+    urlObj = new URL(url); 
+  } catch(e) { 
+    return false; 
+  }
+  
+  if (urlObj.protocol === "http:") {
+    return false;
+  }
+
+  const hostname = urlObj.hostname;
+
+  // Local Database Check
+  const storage = await chrome.storage.local.get("scam_db");
+  const localList = storage.scam_db || [];
+  const cleanHost = hostname.replace(/^www\./, "");
+  if (localList.some(scam => cleanHost.includes(scam))) return false;
+
+  // Google Safe Browsing
+  if (await checkGoogleSafeBrowsing(url)) return false;
+
+  //  VirusTotal
+  if (await checkVirusTotal(url)) return false;
+
+  return true;
+}
+
+// SYNC FUNCTIONS 
 async function syncUserPoints() {
   const { userId } = await chrome.storage.local.get("userId");
   if (!userId) return;
@@ -54,62 +125,17 @@ async function syncUserPoints() {
   } catch (e) {}
 }
 
-// --- RIGHT CLICK LISTENER (Deep Scan) ---
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId === "scanLink") {
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "y1.jpg",
-      title: "Guardian Scanning...",
-      message: "Checking Google Safe Browsing & VirusTotal."
-    });
+// SYNC SCAM LIST FROM FIREBASE
 
-    const isSafe = await runDeepScan(info.linkUrl);
-
-    if (isSafe) {
-      chrome.notifications.create({
-        type: "basic",
-        iconUrl: "scam.jpg",
-        title: "✅ Link Appears Safe",
-        message: "No threats found in Global Security Databases."
-      });
-    } else {
-      chrome.notifications.create({
-        type: "basic",
-        iconUrl: "scam.jpg",
-        title: "⛔ DANGER DETECTED",
-        message: "This link is flagged as unsafe! Do not visit."
-      });
-    }
-  }
-});
-
-// --- MAIN SCANNING LOGIC ---
-async function runDeepScan(url) {
-  let urlObj;
-  try { urlObj = new URL(url); } catch(e) { return false; }
-  const hostname = urlObj.hostname;
-
-  // 1. Local Database Check
-  const storage = await chrome.storage.local.get("scam_db");
-  const localList = storage.scam_db || [];
-  const cleanHost = hostname.replace(/^www\./, "");
-  if (localList.some(scam => cleanHost.includes(scam))) return false;
-
-  // 2. Google Safe Browsing
-  if (await checkGoogleSafeBrowsing(url)) return false;
-
-  // 3. VirusTotal
-  if (await checkVirusTotal(url)) return false;
-
-  return true;
-}
-
-// --- SYNC SCAM LIST ---
 async function syncScamList() {
   try {
     const endpoint = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/reports?key=${API_KEY}`;
     const response = await fetch(endpoint);
+    if (!response.ok) {
+        console.error("Firebase Error (Quota?):", response.statusText);
+        return;
+    }
+
     const data = await response.json();
 
     const approvedScams = [];
@@ -118,18 +144,30 @@ async function syncScamList() {
         const fields = doc.fields;
         if (fields.status && fields.status.stringValue === "approved") {
           if (fields.url && fields.url.stringValue) {
-            approvedScams.push(fields.url.stringValue);
+            
+            const rawUrl = fields.url.stringValue;
+            
+            try {
+                const hostname = new URL(rawUrl).hostname.replace(/^www\./, "");
+                approvedScams.push(hostname);
+            } catch (e) {
+                approvedScams.push(rawUrl);
+            }
           }
         }
       });
     }
+    
+    // Ab Clean List ko save karo
+    console.log("Scam DB Updated. Total Sites:", approvedScams.length);
     await chrome.storage.local.set({ scam_db: approvedScams });
+    
   } catch (error) {
     console.error("Sync failed:", error);
   }
 }
 
-// --- PROTECTION LOGIC (On Tab Update) ---
+// --- PROTECTION LOGIC (Tab Update) ---
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (tab.url && !tab.url.startsWith("chrome://")) {
     checkUrlSafety(tab.url, tabId);
@@ -138,30 +176,26 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 async function checkUrlSafety(url, tabId) {
   let urlObj;
-  try { urlObj = new URL(url); } catch(e) { return; }
+  try { urlObj = new URL(url); } 
+  catch(e) { return; }
   const hostname = urlObj.hostname;
 
-  // 1. Whitelist Check
-  const storage = await chrome.storage.local.get("whitelist");
+  const storage = await chrome.storage.local.get(["scam_db", "whitelist"]);
   const whitelist = storage.whitelist || [];
   if (whitelist.includes(hostname)) return; 
 
-  // 2. HTTP Check
   if (urlObj.protocol === "http:") {
     blockSite(tabId, url, "Insecure Connection (HTTP Blocked)");
     return;
   }
 
-  // 3. Local Scam DB
-  const data = await chrome.storage.local.get("scam_db");
-  const localList = data.scam_db || [];
+  const localList = storage.scam_db || [];
   const cleanHost = hostname.replace(/^www\./, "");
   if (localList.some(scam => cleanHost.includes(scam))) {
     blockSite(tabId, url, "Community Reported Scam");
     return;
   }
 
-  // 4. Google Safe Browsing (Fastest API check)
   if (await checkGoogleSafeBrowsing(url)) {
     blockSite(tabId, url, "Google Safe Browsing Alert");
     return;
@@ -173,7 +207,7 @@ function blockSite(tabId, originalUrl, reason) {
   chrome.tabs.update(tabId, { url: warningUrl });
 }
 
-// --- API IMPLEMENTATIONS (Google & VirusTotal Only) ---
+// --- API IMPLEMENTATIONS ---
 
 async function checkGoogleSafeBrowsing(url) {
   if (!GOOGLE_API_KEY || GOOGLE_API_KEY.includes("YOUR_")) return false;
@@ -194,7 +228,9 @@ async function checkGoogleSafeBrowsing(url) {
     });
     const data = await response.json();
     return data.matches && data.matches.length > 0;
-  } catch (e) { return false; }
+  } catch (e) { 
+    return false; 
+  }
 }
 
 async function checkVirusTotal(url) {
@@ -209,6 +245,8 @@ async function checkVirusTotal(url) {
       const stats = data.data.attributes.last_analysis_stats;
       return (stats.malicious + stats.suspicious) > 0;
     }
-  } catch (e) { return false; }
+  } catch (e) { 
+    return false; 
+  }
   return false;
 }

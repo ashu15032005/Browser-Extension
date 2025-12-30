@@ -1,10 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Guardian URL: Ultimate Shield",
+  "name": "Guardian URL: AI Powered-Ultimate Shield",
   "version": "2.0",
-  "description": "Real-time protection against scams using Google Safe Browsing, VirusTotal, and Community Reports.",
+  "description": "AI Powered Real-time protection against scams using Google Safe Browsing, VirusTotal, and Community Reports.",
   "permissions": ["tabs", "storage", "alarms", "contextMenus", "notifications"],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "<all_urls>",
+    "https://generativelanguage.googleapis.com/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
